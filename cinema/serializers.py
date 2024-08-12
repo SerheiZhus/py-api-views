@@ -2,17 +2,17 @@ from rest_framework import serializers
 from cinema.models import Movie, Actor, Genre, CinemaHall
 
 
-class MovieSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(max_length=255, required=True)
-    description = serializers.CharField(required=True)
-    duration = serializers.IntegerField(required=True)
-    actors = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Actor.objects.all()
+class MovieSerializer(serializers.ModelSerializer):
+    actors = serializers.SlugRelatedField(
+        many=True, slug_field="last_name", queryset=Actor.objects.all()
     )
-    genres = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Genre.objects.all()
+    genres = serializers.SlugRelatedField(
+        many=True, slug_field="name", queryset=Genre.objects.all()
     )
+
+    class Meta:
+        model = Movie
+        fields = "__all__"
 
     def create(self, validated_data: dict) -> Movie:
         actors_data = validated_data.pop("actors")
@@ -33,63 +33,23 @@ class MovieSerializer(serializers.Serializer):
 
         if "genres" in validated_data:
             instance.genres.set(validated_data["genres"])
-
         instance.save()
         return instance
 
 
-class ActorSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    first_name = serializers.CharField(max_length=255, required=True)
-    last_name = serializers.CharField(max_length=255, required=True)
-
-    def create(self, validated_data: dict) -> Actor:
-        return Actor.objects.create(**validated_data)
-
-    def update(self, instance, validated_data: dict) -> Actor:
-        instance.first_name = validated_data.get(
-            "first_name",
-            instance.first_name
-        )
-        instance.last_name = validated_data.get(
-            "last_name",
-            instance.last_name
-        )
-        instance.save()
-        return instance
+class ActorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Actor
+        fields = "__all__"
 
 
-class GenreSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(max_length=255, required=True)
-
-    def create(self, validated_data: dict) -> Genre:
-        return Genre.objects.create(**validated_data)
-
-    def update(self, instance, validated_data: dict) -> Genre:
-        instance.name = validated_data.get(
-            "name",
-            instance.name
-        )
-        instance.save()
-        return instance
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = "__all__"
 
 
-class CinemaHallSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(max_length=255, required=True)
-    rows = serializers.IntegerField(required=True)
-    seats_in_row = serializers.IntegerField(required=True)
-
-    def create(self, validated_data: dict) -> CinemaHall:
-        return CinemaHall.objects.create(**validated_data)
-
-    def update(self, instance, validated_data: dict) -> CinemaHall:
-        instance.name = validated_data.get("name", instance.name)
-        instance.rows = validated_data.get("rows", instance.rows)
-        instance.seats_in_row = validated_data.get(
-            "seats_in_row",
-            instance.seats_in_row
-        )
-        instance.save()
-        return instance
+class CinemaHallSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CinemaHall
+        fields = "__all__"
